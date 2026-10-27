@@ -1,0 +1,33 @@
+name: Publish re-edited Carol YURI video
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/publish-carol-yuri-reedited.yml']
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Download and verify corrected videos
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl --fail --location --retry 3 'https://d2ol7oe51mr4n9.cloudfront.net/user_3928zmivRRlEagnO67dqCCUMSDW/1cd65fd5-aacd-4965-977f-b92ddf8555b3.mp4' -o Carol_YURI_Reedited_Captioned_480p.mp4
+          curl --fail --location --retry 3 'https://d2ol7oe51mr4n9.cloudfront.net/user_3928zmivRRlEagnO67dqCCUMSDW/1089bd10-f4a9-40a7-87fe-c547328d0747.mp4' -o Carol_YURI_Reedited_Clean_480p.mp4
+          echo '80b28c27faad1f98aadce3ff6383e4c15a991051cd074b0fa94f93a0fb3badba  Carol_YURI_Reedited_Captioned_480p.mp4' | sha256sum --check
+          echo '67b7287e127201be74b792e1172c2280ba7efae361cc72b223536056c29b99e7  Carol_YURI_Reedited_Clean_480p.mp4' | sha256sum --check
+      - name: Publish corrected video release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if ! gh release view carol-yuri-20261027-reedited >/dev/null 2>&1; then
+            gh release create carol-yuri-20261027-reedited --target main --title 'Carol YURI — Re-edited 480p' --notes 'Re-edited from the original accepted Cinema Studio clips. Restores complete dialogue and natural reactions; removes 11 internal edit cuts. 2:40, vertical 480 x 854, 24 fps. Captioned and clean versions with music and sound effects.' --draft
+          fi
+          gh release upload carol-yuri-20261027-reedited Carol_YURI_Reedited_Captioned_480p.mp4 Carol_YURI_Reedited_Clean_480p.mp4 --clobber
+          gh release edit carol-yuri-20261027-reedited --draft=false
