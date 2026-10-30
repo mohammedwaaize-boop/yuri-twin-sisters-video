@@ -1,0 +1,31 @@
+name: Publish SR3 captioned video
+on:
+  push:
+    branches: [sr3-captioned-20261030]
+    paths: ['.github/workflows/publish-sr3-captioned.yml']
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Download and verify the captioned MP4
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl --fail --location --retry 3 'https://d2ol7oe51mr4n9.cloudfront.net/user_3928zmivRRlEagnO67dqCCUMSDW/5966ea8a-e05e-4a03-99bc-33a1dcfcd005.mp4' -o YURI_SR3_Final_Captioned_480p.mp4
+          echo '60dc871ac3db1e9275eeda25f462d4c8b88b67132098200a47ef5f69b8e9b9c3  YURI_SR3_Final_Captioned_480p.mp4' | sha256sum --check
+      - name: Publish the single captioned video
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if ! gh release view sr3-yuri-20261030-captioned >/dev/null 2>&1; then
+            gh release create sr3-yuri-20261030-captioned --target "$GITHUB_SHA" --title 'YURI SR3 — Final Captioned Video' --notes 'One complete captioned MP4, native 480x854, 24 fps. Corrected original pink merchandise and tighter pacing. No separate subtitle files, clean versions or split archives.' --draft
+          fi
+          gh release upload sr3-yuri-20261030-captioned YURI_SR3_Final_Captioned_480p.mp4 --clobber
+          gh release edit sr3-yuri-20261030-captioned --draft=false
